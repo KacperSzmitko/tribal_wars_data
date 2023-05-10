@@ -1,0 +1,5 @@
+dist/*
+build/*
+config.json
+test_data.json
+Pipfile.lock
