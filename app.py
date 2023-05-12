@@ -10,6 +10,7 @@ from typing import List
 from dataclasses import dataclass, field
 from selenium.webdriver.support.ui import Select
 import xlsxwriter
+import re
 
 
 URL = "https://www.plemiona.pl/"
@@ -20,6 +21,7 @@ TRIBE_ARMY = '//*[@id="ally_content"]/table/tbody/tr/td[2]/a'
 TRIBE_BUILDINGS = '//*[@id="ally_content"]/table/tbody/tr/td[3]/a'
 TRIBE_DEFF = '//*[@id="ally_content"]/table/tbody/tr/td[4]/a'
 PLAIN_TABLE = '//*[@id="ally_content"]/div/div/table'
+TRIBE_MEMBERS_TABLE = '//*[@id="form_rights"]/table'
 
 
 @dataclass
@@ -96,6 +98,7 @@ class Config:
 
 
 class DataBot:
+    RE_CLEAR_ACCESS_FROM_NICK = re.compile(r' \(brak dostępu\).*')
 
     def __init__(self) -> None:
         self.workbook = xlsxwriter.Workbook('data.xlsx')
@@ -173,9 +176,18 @@ class DataBot:
     def get_data(self, type: str):
         select = Select(
             self.browser.find_element(By.NAME, "player_id"))
-        options = select.options
-        for index in range(1, len(options) - 1):
-            select.select_by_index(index)
+        for index in range(1, len(select.options)):
+            try:
+                select.select_by_index(index)
+            except NotImplementedError:
+                player_name = re.sub(
+                    self.RE_CLEAR_ACCESS_FROM_NICK, '', select.options[index].text)
+                player = self.get_player(player_name)
+                if type == "buildings":
+                    player.buildings.append(Building())
+                elif type == "army":
+                    player.army.append(Army())
+                continue
             select = Select(
                 self.browser.find_element(By.NAME, "player_id"))
             player_name = select.first_selected_option.text

@@ -12,6 +12,7 @@ xlsxwriter = "*"
 [dev-packages]
 flake8 = "*"
 autopep8 = "*"
+commitizen = "*"
 
 [requires]
 python_version = "3.10"
